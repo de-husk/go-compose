@@ -1,5 +1,7 @@
 package compose
 
+import "slices"
+
 type ChainFunc[T any] func(T) T
 
 // Usage:
@@ -9,12 +11,12 @@ type Chain[T any] struct {
 	chain []ChainFunc[T]
 }
 
+// NewChain creates a new chain of passed in ChainFuncs.
+//
+// No ChainFunc functions are called until Compose is called.
 func NewChain[T any](cfs ...ChainFunc[T]) *Chain[T] {
-	chain := make([]ChainFunc[T], len(cfs))
-	copy(chain, cfs)
-
 	return &Chain[T]{
-		chain: chain,
+		chain: slices.Clone(cfs),
 	}
 }
 
@@ -24,9 +26,7 @@ func (c *Chain[T]) Next(cf ChainFunc[T]) *Chain[T] {
 	return c
 }
 
-// Compose resolves the chain into a single http.Handler
-//
-// If `end` is nil, defaults to http.DefaultServeMux
+// Compose resolves the chain into a single T value
 func (c *Chain[T]) Compose(arg T) T {
 	r := arg
 	for i := len(c.chain) - 1; i >= 0; i-- {
