@@ -2,10 +2,10 @@ package compose
 
 import "slices"
 
-type ChainFunc[T any] func(T) T
-
 // Usage:
 // Turns `hf1(hf2(hf3(h)))` -> `compose.NewChain(hf1, hf2, hf3).Compose(h)`
+
+type ChainFunc[T any] func(T) T
 
 type Chain[T any] struct {
 	chain []ChainFunc[T]
