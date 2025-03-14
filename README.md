@@ -2,7 +2,7 @@
 
 Generic function chain composition in golang.
 
-Turns `hf1(hf2(hf3(h)))` -> `chain.New(hf1, hf2, hf3).Compose(h)`
+Turns `hf1(hf2(hf3(h)))` -> `compose.New(hf1, hf2, hf3).Compose(h)`
 
 ## Example Usage
 
@@ -15,7 +15,7 @@ auth(recoverPanic(logRequest(commonHeaders(mux))))
 
 Into:
 ```
-compose.NewChain(auth, recoverPanic, logRequest, commonHeaders).Compose(mux)
+compose.New(auth, recoverPanic, logRequest, commonHeaders).Compose(mux)
 ```
 
 ### Math
@@ -27,5 +27,5 @@ math.Floor(math.Sqrt(math.Abs(-1234)))
 
 Into:
 ```
-compose.NewChain(math.Floor, math.Sqrt, math.Abs).Compose(-1234)
+compose.New(math.Floor, math.Sqrt, math.Abs).Compose(-1234)
 ```

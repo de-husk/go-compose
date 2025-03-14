@@ -3,16 +3,44 @@ package compose_test
 import (
 	"math"
 	"net/http"
+	"sync/atomic"
 	"testing"
 
 	"github.com/de-husk/go-compose"
 )
 
 func TestChain_Math(t *testing.T) {
-	val := compose.NewChain(math.Floor, math.Sqrt, math.Abs).Compose(-1234)
+	val := compose.New(math.Floor, math.Sqrt, math.Abs).Compose(-1234)
 
 	if val != math.Floor(math.Sqrt(math.Abs(-1234))) {
 		t.Errorf("val should be %v", val)
+	}
+}
+
+func TestMerge(t *testing.T) {
+	var i atomic.Uint32
+
+	c1 := compose.New(i.Add)
+
+	c2 := compose.New(i.Add)
+
+	c3 := c1.Merge(c2)
+
+	v1 := c1.Compose(5)
+	if v1 != 5 {
+		t.Errorf("v1 should be 5 but was: %v", v1)
+	}
+
+	v2 := c1.Compose(5)
+	if v2 != 10 {
+		t.Errorf("v1 should be 10 but was: %v", v2)
+	}
+
+	v3 := c3.Compose(10)
+
+	if v3 != 40 {
+		t.Errorf("v3 should be 40 but was: %v", v3)
+		return
 	}
 }
 
@@ -39,7 +67,7 @@ func TestChain_OneHandler(t *testing.T) {
 		})
 	}
 
-	c := compose.NewChain(hf)
+	c := compose.New(hf)
 
 	h := c.Compose(http.DefaultServeMux)
 
@@ -106,7 +134,7 @@ func TestChain_TwoHandlers(t *testing.T) {
 		})
 	}
 
-	c := compose.NewChain(one, two)
+	c := compose.New(one, two)
 
 	req, err := http.NewRequest("GET", "/foo", nil)
 	if err != nil {
@@ -181,15 +209,13 @@ func TestNext(t *testing.T) {
 		})
 	}
 
-	c := compose.NewChain(one)
+	c := compose.New(one).Next(two)
 
 	req, err := http.NewRequest("GET", "/foo", nil)
 	if err != nil {
 		t.Error(err.Error())
 		return
 	}
-
-	c.Next(two)
 
 	h := c.Compose(http.DefaultServeMux)
 
@@ -213,4 +239,22 @@ func TestNext(t *testing.T) {
 	if !twoSet {
 		t.Errorf("two was not called")
 	}
+}
+
+func one(h http.Handler) http.Handler {
+	return h
+}
+
+func two(h http.Handler) http.Handler {
+	return h
+}
+
+func TestAliasTypeInference(t *testing.T) {
+	var hfs = []func(http.Handler) http.Handler{
+		one,
+		two,
+	}
+	compose.New(one, two)
+	compose.New(hfs[0], hfs[1])
+	compose.New(hfs...)
 }
